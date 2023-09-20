@@ -19,7 +19,7 @@ class App extends Component {
     const { tasks, taskText } = this.state;
     if (taskText.trim() === '') return;
 
-    const newTask = { id: Date.now().toString(), text: taskText, completed: false };
+    const newTask = { id: Date.now().toString(), text: taskText, deadline: '', completed: false };
     this.setState({
       tasks: [...tasks, newTask],
       taskText: '',
@@ -39,6 +39,32 @@ class App extends Component {
     tasks.splice(result.destination.index, 0, reorderedTask);
 
     this.setState({ tasks });
+  };
+
+  handleDeadlineChange = (taskId, deadline) => {
+    const updatedTasks = this.state.tasks.map((task) => {
+      if (task.id === taskId) {
+        return { ...task, deadline };
+      }
+      return task;
+    });
+
+    this.setState({ tasks: updatedTasks });
+  };
+
+  calculateTimeLeft = (deadline) => {
+    if (!deadline) return 'No deadline';
+
+    const now = new Date();
+    const deadlineDate = new Date(deadline);
+    const timeDiff = deadlineDate - now;
+
+    if (timeDiff <= 0) {
+      return 'Deadline passed';
+    }
+
+    const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    return `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
   };
 
   render() {
@@ -75,8 +101,18 @@ class App extends Component {
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
+                        className="task-container" // Add a new class
                       >
-                        <span className="task-text">{task.text}</span>
+                        <div className="task-content"> {/* Wrap task content in a div */}
+                          <span className="task-text">{task.text}</span>
+                          <input
+                            type="date"
+                            className="deadline-input"
+                            value={task.deadline}
+                            onChange={(e) => this.handleDeadlineChange(task.id, e.target.value)}
+                          />
+                          <div className="time-left">{this.calculateTimeLeft(task.deadline)}</div>
+                        </div>
                         <button
                           className="delete-button"
                           onClick={() => this.deleteTask(task.id)}
